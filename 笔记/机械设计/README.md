@@ -45,22 +45,22 @@ $$F=3*n(构件数)-2p_L(低副数)-p_H(高副数)$$
 1. 铰链四杆机构:
    1. 要求:所有运动副都是转动副
    2. 分类：
-      1. 曲柄摇杆机构：转换整周转动和往复摆动<br/>![alt text](image.png)
-      2. 双曲柄机构：匀速圆周$\rightarrow$变速圆周<br/>![alt text](image-1.png)
-      3. 双摇杆机构：摆动直接转换，幅度变大<br/>![alt text](image-2.png)
+      1. 曲柄摇杆机构：转换整周转动和往复摆动<br/>![alt text](./image.png)
+      2. 双曲柄机构：匀速圆周$\rightarrow$变速圆周<br/>![alt text](./image-1.png)
+      3. 双摇杆机构：摆动直接转换，幅度变大<br/>![alt text](./image-2.png)
 2. 含有一个移动副的四杆机构
    1. 要求：铰链四杆机构的一个转动副变为移动副
    2. 备注：
       1. 实际上只有2根杆（可能）
    3. 分类：
-      1. 曲柄滑块机构：<br/>![alt text](image-3.png)
+      1. 曲柄滑块机构：<br/>![alt text](./image-3.png)
          1. C过A点则为对心曲柄滑块机构
          2. C不过A点则为偏置曲柄滑块机构
-      2. 导杆机构：曲柄滑块机构中的曲柄变为机架（AB固定，BC转动）<br/>![alt text](image-4.png)
+      2. 导杆机构：曲柄滑块机构中的曲柄变为机架（AB固定，BC转动）<br/>![alt text](./image-4.png)
 3. 含有两个移动副的四杆机构：
-   1. 正弦机构<br/>![alt text](image-5.png)
-   2. 双转块/移块机构<br/>![alt text](image-6.png)
-4. 偏心轮机构：<br/>![alt text](image-7.png)
+   1. 正弦机构<br/>![alt text](./image-5.png)
+   2. 双转块/移块机构<br/>![alt text](./image-6.png)
+4. 偏心轮机构：<br/>![alt text](./image-7.png)
 
 |名词|解释|
 |:-:|:--|
