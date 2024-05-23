@@ -9,7 +9,6 @@
  * 6. 计算多个雷达的波束
  */
 
-#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -18,32 +17,35 @@
 #define M 100
 #define R 10
 
-typedef struct Radar_beam
+typedef struct Radar_beams
 {
     double value;
-    Radar_beam *next;
-    Radar_beam *prev;
+    struct Radar_beams *next;
+    struct Radar_beams *prev;
 } Radar_beam;
 
-typedef struct Radar
+typedef struct
 {
-    double beam_length;    // 波束长度
-    double reflected_length; // 反射波束长度
-    Radar_beam *beam;      // 波束
+    int beam_length;         // 波束长度
+    int reflected_length;    // 反射波束长度
+    Radar_beam *beam;           // 波束
     Radar_beam *reflected_beam; // 反射波束
-    double sending_beam;   // 正在发送的波束
-    double receiving_beam; // 正在接收的波束
+    double sending_beam;        // 正在发送的波束
+    double receiving_beam;      // 正在接收的波束
 } Radar;
 
 char map[N][M];
-double beam_line[1000]; // 用于存储波束10个循环内的值
-int redar_num;          // 雷达数量
-Radar redar[10];        // 雷达数组
-int redar_location;     // 第一个雷达的y轴位置，雷达的x轴位置为0，雷达的y轴位置为redar_location + i * redar_distance，i为雷达的编号
-int redar_distance;     // 雷达间隔
-int theta;              // 波束相位差
-double distance[10];    // 距离数组
-double count_distance[10];  // 计算的距离
+double beam_line[2000];      // 用于存储波束1个循环内的值
+int redar_num;               // 雷达数量
+Radar redar[10];             // 雷达数组
+int redar_location;          // 第一个雷达的y轴位置，雷达的x轴位置为0，雷达的y轴位置为redar_location + i * redar_distance，i为雷达的编号
+int redar_distance;          // 雷达间隔
+int theta;                   // 波束相位差
+double distance[10];         // 距离数组
+double counted_distance[10]; // 计算的距离
+double combine_distant[10];  // 组合距离
+double combine_speed[10];    // 组合速度
+double combine_acc[10];      // 组合加速度
 double object_x, object_y;
 double object_speed_x, object_speed_y;
 double object_acc_x, object_acc_y;
@@ -55,9 +57,13 @@ void count_distance();
 void print_map();
 void set_redar();
 void create_beam_fuction();
-void update_redar();
+void update_redar(long long time);
 void update_beam();
 void calculate_distance();
+
+double pow(double x, int y);
+double sqrt(double x);
+double sin(double x);
 
 int main()
 {
@@ -65,22 +71,30 @@ int main()
     set_object_state();
     set_redar();
     create_beam_fuction();
+    long long time = 0;
     while (1)
     {
-        update_object_state();
-        count_distance();
-        update_redar();
-        print_map();
+        for (int i = 0; i < 100; i++)
+        {
+            update_object_state();
+            count_distance();
+            update_redar(time);
+            time++;
+        }
+        calculate_distance();
+        printf("\n");
         printf("物体位置: (%lf, %lf)\n", object_x, object_y);
+        printf("物体速度: (%lf, %lf)\n", object_speed_x, object_speed_y);
+        printf("物体加速度: (%lf, %lf)\n", object_acc_x, object_acc_y);
         for (int i = 0; i < redar_num; i++)
         {
-            printf("雷达%d实际距离: %lf\n", i, distance[i]);
-            printf("雷达%d计算距离: %lf\n", i, count_distance[i]);
+            printf("雷达%d实际距离: %lf\t", i, distance[i]);
+            printf("雷达%d计算距离: %lf\n", i, counted_distance[i]);
         }
-        system("clear");
+        print_map();
+        // system("clear");
     }
     return 0;
-
 }
 
 void init()
@@ -113,10 +127,10 @@ void set_object_state()
 
 void update_object_state()
 {
-    object_x += object_speed_x * 0.1 + 0.5 * object_acc_x * 0.01;
-    object_y += object_speed_y * 0.1 + 0.5 * object_acc_y * 0.01;
-    object_speed_x += object_acc_x * 0.1;
-    object_speed_y += object_acc_y * 0.1;
+    object_x += object_speed_x * 0.001 + 0.5 * object_acc_x * 0.000001;
+    object_y += object_speed_y * 0.001 + 0.5 * object_acc_y * 0.000001;
+    object_speed_x += object_acc_x * 0.001;
+    object_speed_y += object_acc_y * 0.001;
 }
 
 void count_distance()
@@ -134,10 +148,10 @@ void print_map()
         printf("-");
     }
     printf("\n");
-    for (int i = 0; i < N; i++)
+    for (int j = 0; j < N; j++)
     {
         printf("|");
-        for (int j = 0; j < M; j++)
+        for (int i = 0; i < M; i++)
         {
             if (i == (int)object_x && j == (int)object_y)
             {
@@ -189,18 +203,17 @@ void set_redar()
 
 void create_beam_fuction()
 {
-    for (int i = 0; i < 1000; i++)
+    for (int i = 0; i < 2000; i++)
     {
-        beam_line[i] = sin(2 * PI * i / 100);
+        beam_line[i] = sin(0.5 * PI * i / 2000);
     }
 }
 
-void update_redar()
+void update_redar(long long time)
 {
-    int time = 0;
     for (int i = 0; i < redar_num; i++)
     {
-        redar[i].sending_beam = beam_line[i * theta + time];
+        redar[i].sending_beam = beam_line[(i * theta + time) % 2000];
     }
     update_beam();
 }
@@ -227,12 +240,11 @@ void update_beam()
             p->next = p->next->prev;
             redar[i].beam_length++;
         }
-        double beam_distance = redar[i].beam_length;
-        beam_distance = beam_distance * 0.1;
-        if (beam_distance > distance[i])
+        int beam_distance = redar[i].beam_length;
+        while (beam_distance > (int)distance[i] * 10)
         {
             p = redar[i].beam;
-            for (int j = 0; j < redar_num; j++)
+            for (int j = 0; j < redar_num - 1 && p->next != NULL; j++)
             {
                 p = p->next;
             }
@@ -255,17 +267,92 @@ void update_beam()
                 redar[i].beam_length--;
                 redar[i].reflected_length++;
             }
+            beam_distance--;
         }
-        if (redar[i].reflected_length >= redar[i].beam_length)
+        while (redar[i].reflected_length >= redar[i].beam_length)
         {
             Radar_beam *q = redar[i].reflected_beam;
-            for (int j = 0; j < redar_num; j++)
+            for (int j = 0; j < redar_num - 1 && q->next != NULL; j++)
             {
                 q = q->next;
             }
             redar[i].receiving_beam = q->value;
+            redar[i].reflected_length--;
             q->prev->next = NULL;
             free(q);
         }
     }
+}
+
+void calculate_distance()
+{
+    int theta1[10], theta2[10];
+    for (int i = 0; i < redar_num; i++)
+    {
+        theta1[i] = 0;
+        theta2[i] = 0;
+    }
+    for (int i = 0; i < redar_num; i++)
+    {
+        while (theta1[i] < 1000)
+        {
+            if (beam_line[theta1[i]] == redar[i].receiving_beam)
+            {
+                break;
+            }
+            theta1[i]++;
+        }
+        while (theta2[i] < 1000)
+        {
+            if (beam_line[theta2[i]] == redar[i].sending_beam)
+            {
+                break;
+            }
+            theta2[i]++;
+        }
+    }
+    for (int i = 0; i < redar_num; i++)
+    {
+        counted_distance[i] = (theta1[i] - theta2[i]) * 0.1;
+    }
+}
+
+double pow(double x, int y)
+{
+    double result = 1;
+    for (int i = 0; i < y; i++)
+    {
+        result *= x;
+    }
+    return result;
+}
+
+double sqrt(double x)
+{
+    double result = 1;
+    for (int i = 0; i < 100; i++)
+    {
+        result = 0.5 * (result + x / result);
+    }
+    return result;
+}
+
+double sin(double x)
+{
+    double result = 0;
+    for (int i = 0; i < 100; i++)
+    {
+        result += pow(-1, i) * pow(x, 2 * i + 1) / pow(2 * i + 1, 1);
+    }
+    return result;
+}
+
+double combine_distance()
+{
+    double result = 0;
+    for (int i = 0; i < redar_num; i++)
+    {
+        result += counted_distance[i];
+    }
+    return result / redar_num;
 }
