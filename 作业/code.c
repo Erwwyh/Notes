@@ -440,8 +440,8 @@ double sqrt(double x)// 牛顿迭代法
 
 Point CalculateTriangleThirdPoint(Point vA, Point vB, Point vC, float a, float b, float c)
 {
-    float cosA = (b * b + c * c - a * a) / (2 * b * c);// 余弦定理
-    float sinA = sqrt(1.0f - cosA * cosA);
+    double cosA = (b * b + c * c - a * a) / (2 * b * c);// 余弦定理
+    double sinA = sqrt(1.0f - cosA * cosA);
     if ((vA.x - vC.x) * (vB.y - vC.y) - (vB.x - vC.x) * (vA.y - vC.y) > 0.0f) // 判断C在直线AB的左边还是右边
     {
         sinA = -sinA;
@@ -452,7 +452,7 @@ Point CalculateTriangleThirdPoint(Point vA, Point vB, Point vC, float a, float b
     Point vAC; // 对向量AB旋转A的角度,即得到AC的向量
     vAC.x = cosA * vAB.x + sinA * vAB.y;
     vAC.y = -sinA * vAB.x + cosA * vAB.y;
-    float f = 1.0f / sqrt(vAC.x * vAC.x + vAC.y * vAC.y);
+    double f = 1.0f / sqrt(vAC.x * vAC.x + vAC.y * vAC.y);
     vAC.x *= f;
     vAC.y *= f;
     // vC = vA + vAC * b;
