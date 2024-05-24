@@ -58,7 +58,8 @@ typedef struct
 
 double WaveTable[1000];
 int time;
-Point historyPosition[3];
+Point historyPosition[10];
+int historySum;
 
 void inputRadar(Radar *radar, int n);
 void inputParticle(Particle *particle);
@@ -267,30 +268,132 @@ Point calculateParticlePosition(double *calculateDistant, Radar *radar, int n, P
     Point position;
     position.x = 0;
     position.y = 0;
-    for (int i = 0; i < n; i++)
+    Point tmp_position[n];
+    if (n % 2 == 1)
     {
-        position.x += radar[i].position.x * calculateDistant[i];
-        position.y += radar[i].position.y * calculateDistant[i];
+        for (int i = 0; i < n - 1; i += 2)
+        {
+            double x1 = radar[i].position.x;
+            double y1 = radar[i].position.y;
+            double x2 = radar[i + 1].position.x;
+            double y2 = radar[i + 1].position.y;
+            double d1 = calculateDistant[i];
+            double d2 = calculateDistant[i + 1];
+
+            double A = 2 * (x2 - x1);
+            double B = 2 * (y2 - y1);
+            double C = pow(d1, 2) - pow(d2, 2) - pow(x1, 2) + pow(x2, 2) - pow(y1, 2) + pow(y2, 2);
+
+            double x = (B * C - B * y1 * A + A * x1 * B) / (pow(A, 2) + pow(B, 2));
+            double y = (A * C - A * x1 * B + B * y1 * A) / (pow(A, 2) + pow(B, 2));
+
+            tmp_position[i].x = x;
+            tmp_position[i].y = y;
+        }
+
+        for (int i = 0; i < n; i += 2)
+        {
+            position.x += tmp_position[i].x;
+            position.y += tmp_position[i].y;
+        }
+
+        position.x /= n / 2;
+        position.y /= n / 2;
     }
+    else
+    {
+        for (int i = 0; i < n; i += 2)
+        {
+            double x1 = radar[i].position.x;
+            double y1 = radar[i].position.y;
+            double x2 = radar[i + 1].position.x;
+            double y2 = radar[i + 1].position.y;
+            double d1 = calculateDistant[i];
+            double d2 = calculateDistant[i + 1];
+
+            double A = 2 * (x2 - x1);
+            double B = 2 * (y2 - y1);
+            double C = pow(d1, 2) - pow(d2, 2) - pow(x1, 2) + pow(x2, 2) - pow(y1, 2) + pow(y2, 2);
+
+            double x = (B * C - B * y1 * A + A * x1 * B) / (pow(A, 2) + pow(B, 2));
+            double y = (A * C - A * x1 * B + B * y1 * A) / (pow(A, 2) + pow(B, 2));
+
+            tmp_position[i].x = x;
+            tmp_position[i].y = y;
+        }
+
+        for (int i = 0; i < n; i += 2)
+        {
+            position.x += tmp_position[i].x;
+            position.y += tmp_position[i].y;
+        }
+
+        position.x /= n / 2;
+        position.y /= n / 2;
+    }
+    historyPosition[9] = historyPosition[8];
+    historyPosition[8] = historyPosition[7];
+    historyPosition[7] = historyPosition[6];
+    historyPosition[6] = historyPosition[5];
+    historyPosition[5] = historyPosition[4];
+    historyPosition[4] = historyPosition[3];
+    historyPosition[3] = historyPosition[2];
     historyPosition[2] = historyPosition[1];
     historyPosition[1] = historyPosition[0];
     historyPosition[0] = position;
+    if (historySum < 10)
+    {
+        historySum++;
+    }
     return position;
 }
 
 Point calculateParticleSpeed()
 {
+    if (historySum < 2)
+    {
+        return (Point){0, 0};
+    }
     Point speed;
-    speed.x = (historyPosition[2].x - historyPosition[1].x) / 2;
-    speed.y = (historyPosition[2].y - historyPosition[1].y) / 2;
+    double detaX[9], detaY[9];
+    for (int i = 0; i < 9; i++)
+    {
+        detaX[i] = historyPosition[i + 1].x - historyPosition[i].x;
+        detaY[i] = historyPosition[i + 1].y - historyPosition[i].y;
+    }
+    speed.x = 0;
+    speed.y = 0;
+    for (int i = 0; i < 9; i++)
+    {
+        speed.x += detaX[i];
+        speed.y += detaY[i];
+    }
+    speed.x /= 9;
+    speed.y /= 9;
     return speed;
 }
 
 Point calculateParticleAcceleration()
 {
+    if (historySum < 3)
+    {
+        return (Point){0, 0};
+    }
     Point acceleration;
-    acceleration.x = (historyPosition[2].x - 2 * historyPosition[1].x + historyPosition[0].x) / 2;
-    acceleration.y = (historyPosition[2].y - 2 * historyPosition[1].y + historyPosition[0].y) / 2;
+    double detaX[8], detaY[8];
+    for (int i = 0; i < 8; i++)
+    {
+        detaX[i] = historyPosition[i + 1].x - historyPosition[i].x;
+        detaY[i] = historyPosition[i + 1].y - historyPosition[i].y;
+    }
+    acceleration.x = 0;
+    acceleration.y = 0;
+    for (int i = 0; i < 8; i++)
+    {
+        acceleration.x += detaX[i];
+        acceleration.y += detaY[i];
+    }
+    acceleration.x /= 8;
     return acceleration;
 }
 
