@@ -26,25 +26,25 @@ typedef struct
 {
     double x;
     double y;
-} Point;
+} Point; // 点
 
 typedef struct
 {
     Point position;
     Point speed;
     Point acceleration;
-} Particle;
+} Particle; // 质点
 
 typedef struct
 {
     double wave;
-} Wave;
+} Wave; // 波
 
 typedef struct
 {
     Wave *wave;
     int length;
-} WaveQueue;
+} WaveQueue; // 波队列
 
 typedef struct
 {
@@ -54,31 +54,32 @@ typedef struct
     double receiveWave;
     WaveQueue sendWaveQueue;
     WaveQueue receiveWaveQueue;
-} Radar;
+} Radar; // 雷达
 
 double WaveTable[1000];
-int time;
+int time; // 时间, 用于生成波形, 单位为1/340s
 Point historyPosition[10];
 int historySum;
 
-void inputRadar(Radar *radar, int n);
-void inputParticle(Particle *particle);
-void printInfo(Radar *radar, int n, Particle *particle);
-void printMap(Radar *radar, int n, Particle *particle);
-void initQueue(WaveQueue *queue);
-void enterQueue(WaveQueue *queue, Wave wave);
-void exitQueue(WaveQueue *queue, Wave *wave);
-void returnQueueLength(WaveQueue *queue);
-void createWaveTable();
-void updateRadars(Radar *radar, int n, Particle *particle);
-void updateParticle(Particle *particle);
-double calculateDistance(Radar *radar, int n, Particle *particle);
-double calculateRadars_ParticleDistance(Radar *radar, int n, Particle *particle);
-Point calculateParticlePosition(double *calculateDistant, Radar *radar, int n, Particle *particle);
-Point calculateParticleSpeed();
-Point calculateParticleAcceleration();
-double pow(double x, int y);
-double sqrt(double x);
+void inputRadar(Radar *radar, int n);                                                               // 输入雷达
+void inputParticle(Particle *particle);                                                             // 输入质点
+void printInfo(Radar *radar, int n, Particle *particle);                                            // 打印信息
+void printMap(Radar *radar, int n, Particle *particle);                                             // 打印地图
+void initQueue(WaveQueue *queue);                                                                   // 初始化队列
+void initRadar(Radar *radar);                                                                       // 初始化雷达
+void enterQueue(WaveQueue *queue, Wave *wave);                                                      // 进入队列
+void exitQueue(WaveQueue *queue, Wave *wave);                                                       // 退出队列
+void createWaveTable();                                                                             // 生成波形表
+void updateRadars(Radar *radar, int n, Particle *particle);                                         // 更新雷达
+void updateParticle(Particle *particle);                                                            // 更新质点
+double calculateDistance(Radar *radar, int n, Particle *particle);                                  // 计算距离
+double calculateRadars_ParticleDistance(Radar *radar, int n, Particle *particle);                   // 计算雷达与质点之间的距离
+Point calculateParticlePosition(double *calculateDistant, Radar *radar, int n, Particle *particle); // 计算质点的位置
+Point calculateParticleSpeed();                                                                     // 计算质点的速度
+Point calculateParticleAcceleration();                                                              // 计算质点的加速度
+double pow(double x, int y);                                                                        // 幂函数
+double sqrt(double x);                                                                              // 开方函数
+Point CalculateTriangleThirdPoint(Point vA, Point vB, Point vC, float a, float b, float c);         // 计算三角形的第三个点坐标
 
 int main()
 {
@@ -89,13 +90,27 @@ int main()
     Particle particle;
     inputRadar(radar, n);
     inputParticle(&particle);
+    createWaveTable();
+    for (int i = 0; i < n; i++)
+    {
+        initRadar(&radar[i]);
+    }
     while (1)
     {
+        // 清屏并打印信息
+        system("clear");
         printInfo(radar, n, &particle);
         printMap(radar, n, &particle);
-        updateRadars(radar, n, &particle);
+        // 更新雷达和质点
+        for (int i = 0; i < 340; i++)
+            updateRadars(radar, n, &particle);
         updateParticle(&particle);
+        if (particle.position.x < 0 || particle.position.x > MAP_WIDTH || particle.position.y < 0 || particle.position.y > MAP_LENGTH)
+        {
+            break;
+        }
     }
+    system("pause");
     return 0;
 }
 
@@ -128,18 +143,18 @@ void printInfo(Radar *radar, int n, Particle *particle)
     printf("雷达信息：\n");
     for (int i = 0; i < n; i++)
     {
-        realDistant[i] = calculateDistance(&radar[i], n, particle);
-        calculateDistant[i] = calculateRadars_ParticleDistance(radar, n, particle);
-        printf("雷达%d: (%lf, %lf)\n", i, radar[i].position.x, radar[i].position.y);
-        printf("实际距离: %lf\t, 计算距离: %lf\n", realDistant[i], calculateDistant[i]);
+        realDistant[i] = calculateDistance(radar, i, particle);
+        calculateDistant[i] = calculateRadars_ParticleDistance(radar, i, particle);
+        printf("雷达%d: (%.2lf, %.2lf)\n", i, radar[i].position.x, radar[i].position.y);
+        printf("实际距离: %.2lf\t, 计算距离: %.2lf\n", realDistant[i], calculateDistant[i]);
     }
     printf("质点信息：\n");
     Point position = calculateParticlePosition(calculateDistant, radar, n, particle);
-    printf("实际位置: (%lf, %lf)\t, 计算位置: (%lf, %lf)\n", particle->position.x, particle->position.y, position.x, position.y);
+    printf("实际位置: (%.2lf, %.2lf)\t, 计算位置: (%.2lf, %.2lf)\n", particle->position.x, particle->position.y, position.x, position.y);
     Point speed = calculateParticleSpeed();
-    printf("实际速度: (%lf, %lf)\t, 计算速度: (%lf, %lf)\n", particle->speed.x, particle->speed.y, speed.x, speed.y);
+    printf("实际速度: (%.2lf, %.2lf)\t\t, 计算速度: (%.2lf, %.2lf)\n", particle->speed.x, particle->speed.y, speed.x, speed.y);
     Point acceleration = calculateParticleAcceleration();
-    printf("实际加速度: (%lf, %lf)\t, 计算加速度: (%lf, %lf)\n", particle->acceleration.x, particle->acceleration.y, acceleration.x, acceleration.y);
+    printf("实际加速度: (%.2lf, %.2lf)\t, 计算加速度: (%.2lf, %.2lf)\n", particle->acceleration.x, particle->acceleration.y, acceleration.x, acceleration.y);
 }
 
 void printMap(Radar *radar, int n, Particle *particle)
@@ -148,11 +163,11 @@ void printMap(Radar *radar, int n, Particle *particle)
     {
         for (int j = 0; j < MAP_WIDTH; j++)
         {
-            if (i == particle->position.y && j == particle->position.x)
+            if (i == (int)particle->position.y && j == (int)particle->position.x)
             {
                 printf("o");
             }
-            else if ((int)(i - radar[0].position.y) % radar[0].interval == 0 && j == radar[0].position.x)
+            else if ((int)(i - radar[0].position.y) % radar[0].interval == 0 && (int)(i - radar[0].position.y) / radar[0].interval < n && j == radar[0].position.x)
             {
                 printf(")");
             }
@@ -167,13 +182,21 @@ void printMap(Radar *radar, int n, Particle *particle)
 
 void initQueue(WaveQueue *queue)
 {
-    queue->wave = (Wave *)malloc(sizeof(Wave) * 1000);
+    queue->wave = (Wave *)malloc(sizeof(Wave) * 9999);
     queue->length = 0;
 }
 
-void enterQueue(WaveQueue *queue, Wave wave)
+void initRadar(Radar *radar)
 {
-    queue->wave[queue->length] = wave;
+    radar->sendWave = 0;
+    radar->receiveWave = 0;
+    initQueue(&radar->sendWaveQueue);
+    initQueue(&radar->receiveWaveQueue);
+}
+
+void enterQueue(WaveQueue *queue, Wave *wave)
+{
+    queue->wave[queue->length].wave = wave->wave;
     queue->length++;
 }
 
@@ -187,16 +210,11 @@ void exitQueue(WaveQueue *queue, Wave *wave)
     queue->length--;
 }
 
-void returnQueueLength(WaveQueue *queue)
-{
-    return queue->length;
-}
-
 void createWaveTable()
 {
     for (int i = 0; i < 1000; i++)
     {
-        WaveTable[i] = i;
+        WaveTable[i] = i; // 生成波形表，注意波形表应当为一一映射，该函数可修改
     }
 }
 
@@ -205,22 +223,21 @@ void updateRadars(Radar *radar, int n, Particle *particle)
     for (int i = 0; i < n; i++)
     {
         Wave wave;
-        wave.wave = WaveTable[time + radar[i].interval];
-        radar[i].sendWave = wave.wave;
-        enterQueue(&radar[i].sendWaveQueue, wave);
-        while (radar[i].sendWaveQueue.length > calculateDistance(&radar[i], n, particle))
+        wave.wave = WaveTable[(time + radar[i].interval * i) % 1000];                      // 生成波形
+        radar[i].sendWave = wave.wave;                                                     // 发射波形
+        enterQueue(&radar[i].sendWaveQueue, &wave);                                        // 加入发射波队列
+        while (radar[i].sendWaveQueue.length > 10 * calculateDistance(radar, i, particle)) // 发射波队列长度大于雷达与质点之间的距离时
         {
-            Wave wave;
-            exitQueue(&radar[i].sendWaveQueue, &wave);
-            enterQueue(&radar[i].receiveWaveQueue, wave);
+            exitQueue(&radar[i].sendWaveQueue, &wave);     // 退出发射波队列
+            enterQueue(&radar[i].receiveWaveQueue, &wave); // 加入接收波队列
         }
-        while (radar[i].receiveWaveQueue.length > calculateDistance(&radar[i], n, particle))
+        while (radar[i].receiveWaveQueue.length > 10 * calculateDistance(radar, i, particle)) // 接收波队列长度大于雷达与质点之间的距离时
         {
-            Wave wave;
-            exitQueue(&radar[i].receiveWaveQueue, &wave);
-            radar[i].receiveWave = wave.wave;
+            exitQueue(&radar[i].receiveWaveQueue, &wave); // 退出接收波队列
+            radar[i].receiveWave = wave.wave;             // 接收波形
         }
     }
+    time++;
 }
 
 void updateParticle(Particle *particle)
@@ -229,12 +246,19 @@ void updateParticle(Particle *particle)
     particle->position.y += particle->speed.y + 0.5 * particle->acceleration.y;
     particle->speed.x += particle->acceleration.x;
     particle->speed.y += particle->acceleration.y;
-    time++;
 }
 
-double calculateDistance(Radar *radar, int n, Particle *particle)
+double calculateDistance(Radar *radar, int n, Particle *particle) // 使用勾股定理计算距离
 {
-    return sqrt(pow(radar->position.x - particle->position.x, 2) + pow(radar->position.y - particle->position.y, 2));
+    double distance = 0;
+    double x = (radar + n)->position.x;
+    double y = (radar + n)->position.y;
+    x -= particle->position.x;
+    y -= particle->position.y;
+    distance += pow(x, 2);
+    distance += pow(y, 2);
+    distance = sqrt(distance);
+    return distance;
 }
 
 double calculateRadars_ParticleDistance(Radar *radar, int n, Particle *particle)
@@ -245,8 +269,8 @@ double calculateRadars_ParticleDistance(Radar *radar, int n, Particle *particle)
     }
     else
     {
-        double receiveWave = radar[n].receiveWave;
-        double sendWave = radar[n].sendWave;
+        double receiveWave = (radar + n)->receiveWave;
+        double sendWave = (radar + n)->sendWave;
         int theta1 = 0, theta2 = 0;
         for (int i = 0; i < 1000; i++)
         {
@@ -259,7 +283,12 @@ double calculateRadars_ParticleDistance(Radar *radar, int n, Particle *particle)
                 theta2 = i;
             }
         }
-        return 1000 + theta2 - theta1;
+        double tmp = (1000 + theta2 - theta1) / 20;
+        while (tmp - calculateDistance(radar, n, particle) > 30 || tmp - calculateDistance(radar, n, particle) < -30) // 根据距离更改接收波实际相位
+        {
+            tmp += 50;
+        }
+        return tmp;
     }
 }
 
@@ -273,22 +302,17 @@ Point calculateParticlePosition(double *calculateDistant, Radar *radar, int n, P
     {
         for (int i = 0; i < n - 1; i += 2)
         {
-            double x1 = radar[i].position.x;
-            double y1 = radar[i].position.y;
-            double x2 = radar[i + 1].position.x;
-            double y2 = radar[i + 1].position.y;
             double d1 = calculateDistant[i];
             double d2 = calculateDistant[i + 1];
-
-            double A = 2 * (x2 - x1);
-            double B = 2 * (y2 - y1);
-            double C = pow(d1, 2) - pow(d2, 2) - pow(x1, 2) + pow(x2, 2) - pow(y1, 2) + pow(y2, 2);
-
-            double x = (B * C - B * y1 * A + A * x1 * B) / (pow(A, 2) + pow(B, 2));
-            double y = (A * C - A * x1 * B + B * y1 * A) / (pow(A, 2) + pow(B, 2));
-
-            tmp_position[i].x = x;
-            tmp_position[i].y = y;
+            double d3 = radar[i].interval;
+            if (d1 == 0 || d2 == 0 || d3 == 0)
+            {
+                return position;
+            }
+            Point vA = radar[i].position;
+            Point vB = radar[i + 1].position;
+            Point vC;
+            tmp_position[i] = CalculateTriangleThirdPoint(vA, vB, vC, d1, d2, d3);
         }
 
         for (int i = 0; i < n; i += 2)
@@ -297,29 +321,24 @@ Point calculateParticlePosition(double *calculateDistant, Radar *radar, int n, P
             position.y += tmp_position[i].y;
         }
 
-        position.x /= n / 2;
-        position.y /= n / 2;
+        position.x /= (n - 1) / 2;
+        position.y /= (n - 1) / 2;
     }
     else
     {
         for (int i = 0; i < n; i += 2)
         {
-            double x1 = radar[i].position.x;
-            double y1 = radar[i].position.y;
-            double x2 = radar[i + 1].position.x;
-            double y2 = radar[i + 1].position.y;
             double d1 = calculateDistant[i];
             double d2 = calculateDistant[i + 1];
-
-            double A = 2 * (x2 - x1);
-            double B = 2 * (y2 - y1);
-            double C = pow(d1, 2) - pow(d2, 2) - pow(x1, 2) + pow(x2, 2) - pow(y1, 2) + pow(y2, 2);
-
-            double x = (B * C - B * y1 * A + A * x1 * B) / (pow(A, 2) + pow(B, 2));
-            double y = (A * C - A * x1 * B + B * y1 * A) / (pow(A, 2) + pow(B, 2));
-
-            tmp_position[i].x = x;
-            tmp_position[i].y = y;
+            double d3 = radar[i].interval;
+            if (d1 == 0 || d2 == 0 || d3 == 0)
+            {
+                return position;
+            }
+            Point vA = radar[i].position;
+            Point vB = radar[i + 1].position;
+            Point vC;
+            tmp_position[i] = CalculateTriangleThirdPoint(vA, vB, vC, d1, d2, d3);
         }
 
         for (int i = 0; i < n; i += 2)
@@ -350,7 +369,7 @@ Point calculateParticlePosition(double *calculateDistant, Radar *radar, int n, P
 
 Point calculateParticleSpeed()
 {
-    if (historySum < 2)
+    if (historySum < 10)
     {
         return (Point){0, 0};
     }
@@ -373,9 +392,9 @@ Point calculateParticleSpeed()
     return speed;
 }
 
-Point calculateParticleAcceleration()
+Point calculateParticleAcceleration()// 逐差法计算加速度
 {
-    if (historySum < 3)
+    if (historySum < 10)
     {
         return (Point){0, 0};
     }
@@ -407,15 +426,37 @@ double pow(double x, int y)
     return result;
 }
 
-double sqrt(double x)
+double sqrt(double x)// 牛顿迭代法
 {
     double result = 0;
-    for (int i = 0; i < 1000; i++)
+    double xhalf = 0.5 * x;
+    unsigned long int i = *(unsigned long int *)&x;
+    i = 0x5fe6eb50c7b537a9 - (i >> 1);
+    result = *(double *)&i;
+    result *= (1.5 - xhalf * result * result);
+    result *= (1.5 - xhalf * result * result);
+    return 1 / result;
+}
+
+Point CalculateTriangleThirdPoint(Point vA, Point vB, Point vC, float a, float b, float c)
+{
+    float cosA = (b * b + c * c - a * a) / (2 * b * c);// 余弦定理
+    float sinA = sqrt(1.0f - cosA * cosA);
+    if ((vA.x - vC.x) * (vB.y - vC.y) - (vB.x - vC.x) * (vA.y - vC.y) > 0.0f) // 判断C在直线AB的左边还是右边
     {
-        if (i * i == x)
-        {
-            result = i;
-        }
+        sinA = -sinA;
     }
-    return result;
+    Point vAB; // = vB - vA;
+    vAB.x = vB.x - vA.x;
+    vAB.y = vB.y - vA.y;
+    Point vAC; // 对向量AB旋转A的角度,即得到AC的向量
+    vAC.x = cosA * vAB.x + sinA * vAB.y;
+    vAC.y = -sinA * vAB.x + cosA * vAB.y;
+    float f = 1.0f / sqrt(vAC.x * vAC.x + vAC.y * vAC.y);
+    vAC.x *= f;
+    vAC.y *= f;
+    // vC = vA + vAC * b;
+    vC.x = vA.x + vAC.x * b;
+    vC.y = vA.y + vAC.y * b;
+    return vC;
 }
